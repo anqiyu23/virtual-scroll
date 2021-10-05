@@ -23,6 +23,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private filePath = '../assets/acho_export_virtual_scroll.csv';
   private first50RowsWithAllColumns: string[][] = [];
+  private minCellWidthInPx = 200;
   private scrollStartIndex = 0;
   private visibleColumnCount = 5;
   private scrollEndIndex = this.visibleColumnCount * 3;
@@ -31,6 +32,7 @@ export class AppComponent implements OnInit, OnDestroy {
     min: this.scrollStartIndex + 1,
     max: this.scrollEndIndex,
   };
+  private preloadColumnCount = this.visibleColumnCount * 3;
   private subscription: Subscription = new Subscription();
 
   constructor(private http: HttpClient, private papa: Papa) {}
@@ -64,24 +66,35 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private setColumnIndexToLeftMap(rows: string[][]): void {
-    const max = Array(15).fill(0);
+    const maxForEachColumn = Array(this.preloadColumnCount).fill(0);
+
+    // for each column, get the max length among all cells
     for (let i = 1; i < rows.length; i++) {
-      for (let j = 0; j < rows[0].length; j++) {
-        max[j] = Math.max(max[j], rows[i][j] ? rows[i][j].length : 0);
+      for (let j = 0; j < this.preloadColumnCount; j++) {
+        maxForEachColumn[j] = Math.max(
+          maxForEachColumn[j],
+          rows[i][j] ? rows[i][j].length : 0
+        );
       }
     }
 
-    for (let i = 0; i < 15; i++) {
-      const index = getColumnIndex(rows[0][i]);
-      if (this.columnIndexToLeftMap[index] !== undefined) {
+    for (let i = 0; i < this.preloadColumnCount; i++) {
+      const columnIndex = getColumnIndex(rows[0][i]);
+
+      if (this.columnIndexToLeftMap[columnIndex] !== undefined) {
         continue;
       }
-      if (this.columnIndexToLeftMap[index - 1] !== undefined) {
-        this.columnIndexToLeftMap[index] =
-          Math.max(max[i] * 8, 200) + this.columnIndexToLeftMap[index - 1];
-      } else if (this.columnIndexToLeftMap[index + 1] !== undefined) {
-        this.columnIndexToLeftMap[index] =
-          -Math.max(max[i + 1] * 8, 200) + this.columnIndexToLeftMap[index + 1];
+
+      if (this.columnIndexToLeftMap[columnIndex - 1] !== undefined) {
+        // scroll to the right
+        this.columnIndexToLeftMap[columnIndex] =
+          this.columnIndexToLeftMap[columnIndex - 1] +
+          Math.max(maxForEachColumn[i] * 10, this.minCellWidthInPx);
+      } else if (this.columnIndexToLeftMap[columnIndex + 1] !== undefined) {
+        // scroll to the left
+        this.columnIndexToLeftMap[columnIndex] =
+          this.columnIndexToLeftMap[columnIndex + 1] -
+          Math.max(maxForEachColumn[i + 1] * 10, this.minCellWidthInPx);
       }
     }
   }
