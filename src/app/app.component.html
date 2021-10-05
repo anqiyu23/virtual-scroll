@@ -1,9 +1,10 @@
-<div class="container">
+<div #container class="container" [style.width]="containerWidthInPx + 'px'">
   <div class="row" *ngFor="let row of rows">
     <div
       class="cell"
       *ngFor="let cell of row; let i = index"
-      [style.left]="getLeft(i)"
+      [style.left]="getLeft(i) + 'px'"
+      [style.width]="getLeft(i + 1) - getLeft(i) + 'px'"
     >
       {{ cell || "null" }}
     </div>
