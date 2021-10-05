@@ -9,11 +9,12 @@ import { Papa, ParseResult } from 'ngx-papaparse';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  public columnNames: string[] = [];
-  public rows: any[] = [];
+  public rows: string[][] = [];
 
   private subscription: Subscription = new Subscription();
+
   private readonly filePath = '../assets/acho_export_virtual_scroll.csv';
+  private readonly cellWidthInPx = 200;
 
   constructor(private http: HttpClient, private papa: Papa) {}
 
@@ -35,13 +36,22 @@ export class AppComponent implements OnInit, OnDestroy {
   private parseData(data: string): void {
     this.papa.parse(data, {
       complete: (result: ParseResult) => {
-        this.columnNames = result.data[0];
-        this.rows = result.data.slice(1, 50);
+        const first50RowsWithAllColumns: string[][] = result.data.slice(0, 50);
+        const first50RowsWithFirst15Columns: string[][] =
+          first50RowsWithAllColumns.map((row) => row.slice(0, 15));
+        this.rows = first50RowsWithFirst15Columns;
       },
     });
   }
 
   private handleLoadFileError(error: HttpErrorResponse): void {
     console.log(error.message);
+  }
+
+  public getLeft(index: number): string {
+    const columnNames = this.rows[0];
+    const columnName = columnNames[index];
+    const columnIndex = parseInt(columnName.split('field_')[1]) - 1;
+    return this.cellWidthInPx * columnIndex + 'px';
   }
 }

@@ -1,8 +1,11 @@
-<table>
-  <tr>
-    <th *ngFor="let columnName of columnNames">{{ columnName }}</th>
-  </tr>
-  <tr *ngFor="let row of rows">
-    <td *ngFor="let cell of row">{{ cell }}</td>
-  </tr>
-</table>
+<div class="container">
+  <div class="row" *ngFor="let row of rows">
+    <div
+      class="cell"
+      *ngFor="let cell of row; let i = index"
+      [style.left]="getLeft(i)"
+    >
+      {{ cell || "null" }}
+    </div>
+  </div>
+</div>
