@@ -72,7 +72,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     for (let i = 0; i < 15; i++) {
-      const index = +rows[0][i].split('field_')[1];
+      const index = getColumnIndex(rows[0][i]);
       if (this.columnIndexToLeftMap[index] !== undefined) {
         continue;
       }
@@ -151,12 +151,16 @@ export class AppComponent implements OnInit, OnDestroy {
     const columnNames = this.rows[0];
     const columnIndex =
       index >= columnNames.length
-        ? parseInt(columnNames[index - 1].split('field_')[1])
-        : parseInt(columnNames[index].split('field_')[1]) - 1;
+        ? getColumnIndex(columnNames[index - 1])
+        : getColumnIndex(columnNames[index]) - 1;
     return this.columnIndexToLeftMap[columnIndex];
   }
 
   public ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
+}
+
+function getColumnIndex(columnName: string): number {
+  return parseInt(columnName.split('field_')[1]);
 }
