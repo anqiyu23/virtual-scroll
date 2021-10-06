@@ -24,14 +24,13 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 ## Development server
 
-1. Navigate to the workspace folder "anqiyu-virtual-scroll"
-2. Install packages
+1. Install packages
 
    ```
    npm i
    ```
 
-3. Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+2. Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
 If your installation and setup was successful, you should see a page similar to the following:
 <img src="demo.png" alt="demo" />
