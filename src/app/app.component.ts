@@ -27,11 +27,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private scrollStartIndex = 0;
   private visibleColumnCount = 5;
   private scrollEndIndex = this.visibleColumnCount * 3;
-  private columnIndexToLeftMap: any = {
-    0: 0,
-    min: this.scrollStartIndex + 1,
-    max: this.scrollEndIndex,
-  };
+  private columnIndexToLeftMap: { [key: number]: number } = { 0: 0 };
   private preloadColumnCount = this.visibleColumnCount * 3;
   private subscription: Subscription = new Subscription();
 
@@ -78,20 +74,30 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
 
+    // scroll to the right
     for (let i = 0; i < this.preloadColumnCount; i++) {
       const columnIndex = getColumnIndex(rows[0][i]);
-
       if (this.columnIndexToLeftMap[columnIndex] !== undefined) {
         continue;
       }
 
       if (this.columnIndexToLeftMap[columnIndex - 1] !== undefined) {
-        // scroll to the right
+        // the position of the new column on the right depends on its left column
         this.columnIndexToLeftMap[columnIndex] =
           this.columnIndexToLeftMap[columnIndex - 1] +
           Math.max(maxForEachColumn[i] * 10, this.minCellWidthInPx);
-      } else if (this.columnIndexToLeftMap[columnIndex + 1] !== undefined) {
-        // scroll to the left
+      }
+    }
+
+    // scroll to the left
+    for (let i = this.preloadColumnCount - 1; i >= 0; i--) {
+      const columnIndex = getColumnIndex(rows[0][i]);
+      if (this.columnIndexToLeftMap[columnIndex] !== undefined) {
+        continue;
+      }
+
+      if (this.columnIndexToLeftMap[columnIndex + 1] !== undefined) {
+        // the position of the new column on the left depends on its right column
         this.columnIndexToLeftMap[columnIndex] =
           this.columnIndexToLeftMap[columnIndex + 1] -
           Math.max(maxForEachColumn[i + 1] * 10, this.minCellWidthInPx);
@@ -111,10 +117,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private onScroll(): void {
     const scrollLeft = this.container.nativeElement.scrollLeft;
-    const leftBound = this.columnIndexToLeftMap[this.scrollStartIndex];
+    const lefts = Object.values(this.columnIndexToLeftMap);
+    const leftBound = lefts[1];
     const rightBound =
-      this.columnIndexToLeftMap[this.scrollEndIndex] -
-      this.containerWidthInPx * 1.2;
+      lefts[lefts.length - 1] - this.minCellWidthInPx * this.visibleColumnCount;
 
     if (scrollLeft > rightBound) {
       this.incrementScrollIndex();
@@ -125,28 +131,8 @@ export class AppComponent implements OnInit, OnDestroy {
       this.decrementScrollIndex();
     }
 
-    for (
-      let i = Math.min(
-        this.scrollStartIndex + 1,
-        this.columnIndexToLeftMap.min
-      );
-      i <= Math.max(this.scrollEndIndex, this.columnIndexToLeftMap.max);
-      i++
-    ) {
-      if (
-        this.columnIndexToLeftMap[i] !== undefined &&
-        i < this.scrollStartIndex
-      ) {
-        delete this.columnIndexToLeftMap[i];
-      } else if (
-        this.columnIndexToLeftMap[i] !== undefined &&
-        i > this.scrollEndIndex
-      ) {
-        delete this.columnIndexToLeftMap[i];
-      }
-    }
-    this.columnIndexToLeftMap.min = this.scrollStartIndex + 1;
-    this.columnIndexToLeftMap.max = this.scrollEndIndex;
+    this.removeOutOfBoundColumnsFromMap();
+
     this.updateRows();
   }
 
@@ -158,6 +144,20 @@ export class AppComponent implements OnInit, OnDestroy {
   private decrementScrollIndex(): void {
     this.scrollStartIndex -= this.visibleColumnCount;
     this.scrollEndIndex -= this.visibleColumnCount;
+  }
+
+  private removeOutOfBoundColumnsFromMap(): void {
+    let newColumnIndexToLeftMap: { [key: number]: number } = { 0: 0 };
+    for (
+      let i = Math.max(0, this.scrollStartIndex - this.visibleColumnCount);
+      i <= this.scrollEndIndex;
+      i++
+    ) {
+      if (this.columnIndexToLeftMap[i] !== undefined) {
+        newColumnIndexToLeftMap[i] = this.columnIndexToLeftMap[i];
+      }
+    }
+    this.columnIndexToLeftMap = newColumnIndexToLeftMap;
   }
 
   public getLeft(index: number): number {
